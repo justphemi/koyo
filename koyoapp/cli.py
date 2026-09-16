@@ -63,7 +63,7 @@ def dev(
     host: str = typer.Option(
         None,
         "--host",
-        help=f"Address to bind. Defaults to {DEFAULT_HOST}, reachable from other devices on the LAN.",
+        help=f"Address to bind. Defaults to all interfaces via {DEFAULT_HOST}, reachable from other devices on the LAN.",
     ),
     verbose: bool = typer.Option(
         False, "--verbose", help="Stream raw subprocess output from uvicorn, npm, and Tailwind."

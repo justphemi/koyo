@@ -68,7 +68,7 @@ def test_print_startup_shows_local_and_network(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     lines = [line.strip() for line in out.splitlines() if line.strip()]
     assert lines[0] == "Koyo dev server"
-    assert "Local    http://127.0.0.1:2309" in out
+    assert "Local    http://localhost:2309" in out
     assert "Network  http://192.168.1.42:2309" in out
     assert "Ready in 340ms" in out
 
@@ -79,5 +79,5 @@ def test_print_startup_without_lan_shows_local_only(tmp_path, monkeypatch, capsy
     dev_module._print_startup(2309, 12)
 
     out = capsys.readouterr().out
-    assert "Local    http://127.0.0.1:2309" in out
+    assert "Local    http://localhost:2309" in out
     assert "Network" not in out

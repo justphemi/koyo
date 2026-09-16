@@ -18,7 +18,7 @@ from .reload import apply_pycache_prefix, bump_token, with_pycache_env
 from .tailwind import OUTPUT_CSS, compile_tailwind, ensure_tailwind_present, start_tailwind_watch
 
 DEFAULT_PORT = 2309
-DEFAULT_HOST = "0.0.0.0"
+DEFAULT_HOST = "::"
 SERVER_LOG = "dev-server.log"
 _WATCH_STEP = 150
 
@@ -96,7 +96,7 @@ def run_dev(
 
 def _print_startup(port: int, elapsed_ms: int) -> None:
     koyo_log.info("Koyo dev server")
-    koyo_log.info(f"Local    http://127.0.0.1:{port}")
+    koyo_log.info(f"Local    http://localhost:{port}")
     lan_ip = koyo_net.detect_lan_ip()
     if lan_ip is not None:
         koyo_log.info(f"Network  http://{lan_ip}:{port}")

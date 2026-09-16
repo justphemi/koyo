@@ -308,12 +308,12 @@ Start the dev server with hot reload:
 
     koyoapp dev
 
-Open http://127.0.0.1:2309. The server listens on port 2309 by default.
-Override it with --port. The dev server binds 0.0.0.0, so other devices on
-your network can open the printed Network URL, useful for testing on a
-phone. Override the bind address with --host. Subprocess output from pip,
-npm, Tailwind, and uvicorn is quiet by default; pass --verbose to stream
-it.
+Open http://localhost:2309. The server listens on port 2309 by default.
+Override it with --port. The dev server binds all interfaces over IPv4 and
+IPv6, so other devices on your network can open the printed Network URL,
+useful for testing on a phone. Override the bind address with --host.
+Subprocess output from pip, npm, Tailwind, and uvicorn is quiet by default;
+pass --verbose to stream it.
 
 ## Routing
 
