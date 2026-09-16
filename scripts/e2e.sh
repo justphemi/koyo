@@ -41,7 +41,7 @@ test -s "$DEMO/.koyo/build/site/favicon.ico"
 grep -q "Built 1 static routes" "$TMP/build.log"
 
 echo "== build session fallback =="
-grep -q "Visits: 0" "$DEMO/.koyo/build/site/index.html"
+grep -q "Clicks: 0" "$DEMO/.koyo/build/site/index.html"
 if grep -q "__koyo_state" "$DEMO/.koyo/build/site/index.html"; then
   echo "FAIL: production build leaked a session state route"
   exit 1
@@ -111,7 +111,7 @@ grep -q "\.dark" "$TMP/koyo.css"
 
 echo "== htmx and session state =="
 curl -sf -c "$TMP/jar-a.txt" -b "$TMP/jar-a.txt" "http://127.0.0.1:$PORT/" -o "$TMP/session-a.html"
-grep -q "Visits: 0" "$TMP/session-a.html"
+grep -q "Clicks: 0" "$TMP/session-a.html"
 grep -q 'id="visit-count"' "$TMP/session-a.html"
 grep -q 'id="visit-card"' "$TMP/session-a.html"
 STATE_URL="$(grep -oE 'hx-post="/__koyo_state/[^"]+"' "$TMP/session-a.html" | head -n1 | sed -e 's/^hx-post="//' -e 's/"$//' -e 's/&amp;/\&/g')"
@@ -123,16 +123,16 @@ post_state() {
   curl -sf -c "$TMP/jar-a.txt" -b "$TMP/jar-a.txt" -X POST -H "HX-Request: true" "http://127.0.0.1:$PORT$1"
 }
 state_body1="$(post_state "$STATE_URL")"
-echo "$state_body1" | grep -q "Visits: 1"
+echo "$state_body1" | grep -q "Clicks: 1"
 if echo "$state_body1" | grep -q "<html"; then
   echo "state endpoint returned a full page instead of a component render"
   exit 1
 fi
 echo "$state_body1" | grep -q 'id="visit-card"'
 state_body2="$(post_state "$STATE_URL")"
-echo "$state_body2" | grep -q "Visits: 2"
-curl -sf -c "$TMP/jar-a.txt" -b "$TMP/jar-a.txt" "http://127.0.0.1:$PORT/" | grep -q "Visits: 2"
-curl -sf -c "$TMP/jar-b.txt" -b "$TMP/jar-b.txt" "http://127.0.0.1:$PORT/" | grep -q "Visits: 0"
+echo "$state_body2" | grep -q "Clicks: 2"
+curl -sf -c "$TMP/jar-a.txt" -b "$TMP/jar-a.txt" "http://127.0.0.1:$PORT/" | grep -q "Clicks: 2"
+curl -sf -c "$TMP/jar-b.txt" -b "$TMP/jar-b.txt" "http://127.0.0.1:$PORT/" | grep -q "Clicks: 0"
 if [ "$(awk '/koyo_session/ { n++ } END { print n }' "$TMP/jar-a.txt")" -ne 1 ]; then
   echo "FAIL: expected a single koyo_session cookie in jar a"
   exit 1
