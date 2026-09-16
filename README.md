@@ -8,7 +8,7 @@ package installed with pip is available immediately, with no build step or
 compiler touching the Python code.
 
 This is v1, frontend and routing only. No backend API layer, no database,
-no auth, no deployment automation.
+no auth.
 
 ## Install
 
@@ -30,6 +30,16 @@ Open http://127.0.0.1:2309. The home page renders out of the box with an
 animated hero, a call to action linking to the Koyo documentation, and a
 live session counter driven by htmx. Edit any file under `app/`, `public/`,
 or `styles/` and the page updates in place without a full reload.
+
+## Deploying
+
+Every scaffold ships deploy-ready files: a `Procfile` that starts
+`python -m uvicorn koyoapp.serve:app` on `$PORT`, a `requirements.txt`
+pinning the koyoapp release, and a `.railwayignore` that keeps the local
+venv and build output out of deploys. Railway, Render, and any Procfile
+based host can run a Koyo app with no extra setup; for static-only sites,
+`koyoapp build` prerenders into `.koyo/build/site` for any static host.
+See https://justphemi.github.io/koyo-docs for a full guide.
 
 ## CLI
 
