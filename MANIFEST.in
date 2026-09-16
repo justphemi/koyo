@@ -1,0 +1,3 @@
+# Keep local-only files and secrets out of the built distribution.
+exclude .koyotoken state.md state2.md state3.md state4.md state5.md
+global-exclude *.egg-info/*
