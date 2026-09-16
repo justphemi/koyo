@@ -19,6 +19,15 @@ from .tailwind import OUTPUT_CSS, compile_tailwind, ensure_tailwind_present, sta
 
 DEFAULT_PORT = 2309
 DEFAULT_HOST = "0.0.0.0"
+
+_LOGO = """\
+*   *  *****  *   *  *****
+*  *   *   *  *   *  *   *
+* *    *   *   * *   *   *
+***    *   *    *    *   *
+* *    *   *    *    *   *
+*  *   *   *    *    *   *
+*   *  *****    *    *****"""
 SERVER_LOG = "dev-server.log"
 _WATCH_STEP = 150
 
@@ -95,6 +104,8 @@ def run_dev(
 
 
 def _print_startup(port: int, elapsed_ms: int) -> None:
+    for line in _LOGO.splitlines():
+        koyo_log.info(line.rstrip())
     koyo_log.info("Koyo dev server")
     koyo_log.info(f"Local    http://localhost:{port}")
     lan_ip = koyo_net.detect_lan_ip()
