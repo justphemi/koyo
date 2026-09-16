@@ -58,7 +58,7 @@ def create(
 @app.command()
 def dev(
     port: int = typer.Option(
-        None, "--port", help="Port to listen on. Defaults to the project PORT setting, then 2309."
+        None, "--port", help="Port to listen on. Defaults to the project PORT setting, then 2309. If the port is taken, the next free port is used."
     ),
     host: str = typer.Option(
         None,

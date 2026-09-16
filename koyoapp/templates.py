@@ -134,7 +134,7 @@ def visit_counter(request):
         ],
         div(class_="mt-3 flex items-center justify-center gap-4")[
             span(id="visit-count", class_="text-lg font-bold text-brand")[
-                f"Visits: {count}"
+                f"Clicks: {count}"
             ],
             button(
                 class_="cursor-pointer rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-dark",
@@ -323,8 +323,9 @@ Start the dev server with hot reload:
 
     koyoapp dev
 
-Open http://localhost:2309. The server listens on port 2309 by default.
-Override it with --port. The dev server binds all interfaces, so other
+Open http://localhost:2309. The server listens on port 2309 by default. If
+that port is already in use, the next free port is used automatically.
+Override the port with --port. The dev server binds all interfaces, so other
 devices on your network can open the printed Network URL, useful for
 testing on a phone. Override the bind address with --host. Subprocess
 output from pip, npm, Tailwind, and uvicorn is quiet by default; pass
@@ -416,7 +417,7 @@ in a freshly rendered copy of the counter with no full page reload:
     def visit_counter(request):
         count, count_action = use_state(request, "visit_count", 0)
         return div(id="visit-card")[
-            span(id="visit-count")[f"Visits: {count}"],
+            span(id="visit-count")[f"Clicks: {count}"],
             button(
                 **count_action.increment(by=1),
                 hx_target="#visit-card",

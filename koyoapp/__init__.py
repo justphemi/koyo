@@ -1,3 +1,3 @@
 """Koyo, a Python web framework with file based routing."""
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"

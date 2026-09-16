@@ -19,6 +19,7 @@ from .tailwind import OUTPUT_CSS, compile_tailwind, ensure_tailwind_present, sta
 
 DEFAULT_PORT = 2309
 DEFAULT_HOST = "0.0.0.0"
+_MAX_PORT_SCAN = 200
 
 _LOGO = """\
 *   *  *****  *   *  *****
@@ -48,6 +49,10 @@ def run_dev(
     configured = koyo_config.load(project_dir)
     if port is None:
         port = configured.get("PORT", DEFAULT_PORT)
+    resolved = resolve_free_port(port)
+    if resolved != port:
+        koyo_log.info(f"Port {port} is already in use, using {resolved} instead")
+        port = resolved
 
     for name in ("app", "public", "styles"):
         (project_dir / name).mkdir(parents=True, exist_ok=True)
@@ -89,8 +94,10 @@ def run_dev(
             if not explicit_port:
                 new_port = koyo_config.load(project_dir).get("PORT")
                 if new_port is not None and new_port != port:
-                    port = new_port
-                    koyo_log.info(f"Port changed to {port}")
+                    resolved = resolve_free_port(new_port)
+                    if resolved != port:
+                        port = resolved
+                        koyo_log.info(f"Port changed to {port}")
             _stop(server_proc)
             bump_token(project_dir)
             server_proc = _spawn_server(project_dir, port, bind_host, verbose=verbose)
@@ -112,6 +119,24 @@ def _print_startup(port: int, elapsed_ms: int) -> None:
     if lan_ip is not None:
         koyo_log.info(f"Network  http://{lan_ip}:{port}")
     koyo_log.info(f"Ready in {elapsed_ms}ms")
+
+
+def resolve_free_port(port: int, host: str = "127.0.0.1", timeout: float = 0.3) -> int:
+    """Return the first free port at or above ``port``, scanning upward."""
+    if not _port_in_use(port, host, timeout):
+        return port
+    for candidate in range(port + 1, port + 1 + _MAX_PORT_SCAN):
+        if not _port_in_use(candidate, host, timeout):
+            return candidate
+    return port
+
+
+def _port_in_use(port: int, host: str, timeout: float) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
 def _wait_until_ready(port: int, host: str = "127.0.0.1", timeout: float = 10.0) -> float | None:

@@ -1,4 +1,7 @@
 import os
+import socket
+
+import pytest
 
 from starlette.testclient import TestClient
 
@@ -11,6 +14,30 @@ from test_router import make_project
 
 def test_default_host_is_ipv4_all_interfaces():
     assert dev_module.DEFAULT_HOST == "0.0.0.0"
+
+
+def test_resolve_free_port_returns_same_when_free():
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    try:
+        assert dev_module.resolve_free_port(port) == port
+    finally:
+        sock.close()
+
+
+def test_resolve_free_port_steps_up_when_busy():
+    with socket.socket() as busy:
+        busy.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        busy.bind(("127.0.0.1", 0))
+        busy.listen(1)
+        base = busy.getsockname()[1]
+
+        resolved = dev_module.resolve_free_port(base)
+        assert resolved != base
+        assert resolved > base
+        assert not dev_module._port_in_use(resolved, "127.0.0.1", 0.3)
 
 
 def test_live_reload_js_bundles_morphdom_and_poll_logic():

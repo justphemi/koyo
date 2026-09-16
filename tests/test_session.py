@@ -30,7 +30,7 @@ def test_use_state_starts_at_initial(tmp_path):
     with TestClient(app) as client:
         page = client.get("/")
         assert page.status_code == 200
-        assert "Visits: 0" in page.text
+        assert "Clicks: 0" in page.text
         assert "__koyo_state" in page.text
     clear_module_cache()
 
@@ -44,8 +44,8 @@ def test_use_state_increment_persists_across_requests(tmp_path):
         assert url.startswith("/__koyo_state/")
         response = client.post(url)
         assert response.status_code == 200
-        assert "Visits: 1" in response.text
-        assert "Visits: 1" in client.get("/").text
+        assert "Clicks: 1" in response.text
+        assert "Clicks: 1" in client.get("/").text
     clear_module_cache()
 
 
@@ -55,13 +55,13 @@ def test_use_state_two_sessions_are_independent(tmp_path):
     app = build_app(tmp_path)
     with TestClient(app) as client_a:
         first_home = client_a.get("/").text
-        assert "Visits: 0" in first_home
+        assert "Clicks: 0" in first_home
         with TestClient(app) as client_b:
-            assert "Visits: 0" in client_b.get("/").text
+            assert "Clicks: 0" in client_b.get("/").text
         client_a.post(action_url(first_home))
         with TestClient(app) as client_c:
-            assert "Visits: 0" in client_c.get("/").text
-        assert "Visits: 1" in client_a.get("/").text
+            assert "Clicks: 0" in client_c.get("/").text
+        assert "Clicks: 1" in client_a.get("/").text
     clear_module_cache()
 
 
@@ -74,7 +74,7 @@ def test_use_state_build_falls_back_to_initial(tmp_path, monkeypatch):
     build_module.run_build(tmp_path)
     built = tmp_path / ".koyo" / "build" / "site" / "index.html"
     page = built.read_text(encoding="utf-8")
-    assert "Visits: 0" in page
+    assert "Clicks: 0" in page
     assert "__koyo_state" not in page
     clear_module_cache()
 
@@ -89,7 +89,7 @@ def test_session_idle_timeout_resets_values(tmp_path):
     with TestClient(app) as client:
         url = action_url(client.get("/").text)
         client.post(url)
-        assert "Visits: 1" in client.get("/").text
+        assert "Clicks: 1" in client.get("/").text
         time.sleep(0.15)
-        assert "Visits: 0" in client.get("/").text
+        assert "Clicks: 0" in client.get("/").text
     clear_module_cache()

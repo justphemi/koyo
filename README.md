@@ -46,7 +46,8 @@ See https://justphemi.github.io/koyo-docs for a full guide.
 - `koyoapp create .` scaffolds a Koyo project into the current directory.
 - `koyoapp create my-app` creates `my-app` and scaffolds inside it.
 - `koyoapp dev` starts the dev server on port 2309 by default, override
-  with `--port`.
+  with `--port`. If the port is already in use, the next free port is
+  used automatically.
 - `koyoapp build` prerenders every static route into `.koyo/build/site`.
 
 ## Project structure
