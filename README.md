@@ -10,6 +10,10 @@ compiler touching the Python code.
 This is v1, frontend and routing only. No backend API layer, no database,
 no auth.
 
+Koyo is free and open source under the MIT license. Fork it, use it anywhere,
+for anything, and ship what you build with it. Contributions are welcome;
+open an issue or pull request on the repository.
+
 ## Install
 
 Koyo requires Python 3.11 or newer.
