@@ -8,6 +8,8 @@ from . import templates
 from ._placeholders import ICON_RGB, LOGO_RGB, make_favicon_ico, make_png
 from .venv import create_venv
 
+_KOYO_VERSION = None
+
 _ASSET_DIR = Path(__file__).resolve().parent / "assets"
 
 
@@ -16,6 +18,15 @@ class ScaffoldError(Exception):
 
 
 _ROOT_MARKERS = ("app", "koyo.config.py")
+
+
+def _koyo_version() -> str:
+    global _KOYO_VERSION
+    if _KOYO_VERSION is None:
+        from .__init__ import __version__
+
+        _KOYO_VERSION = __version__
+    return _KOYO_VERSION
 
 
 def scaffold(target: str) -> Path:
@@ -36,7 +47,12 @@ def scaffold(target: str) -> Path:
     for relpath, content in templates.FILES.items():
         path = root / relpath
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content.replace("__PROJECT_NAME__", project_name), encoding="utf-8")
+        path.write_text(
+            content.replace("__PROJECT_NAME__", project_name).replace(
+                "__KOYO_VERSION__", _koyo_version()
+            ),
+            encoding="utf-8",
+        )
 
     public_dir = root / "public"
     public_dir.mkdir(exist_ok=True)

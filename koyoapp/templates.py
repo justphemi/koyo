@@ -3,6 +3,21 @@
 from __future__ import annotations
 
 FILES: dict[str, str] = {
+    "Procfile": '''\
+web: python -m uvicorn koyoapp.serve:app --host 0.0.0.0 --port $PORT
+''',
+    "requirements.txt": '''\
+koyoapp==__KOYO_VERSION__
+''',
+    ".railwayignore": '''\
+.venv/
+__pycache__/
+*.py[cod]
+node_modules/
+.koyo/
+dist/
+.DS_Store
+''',
     "app/layout.py": '''\
 from koyoapp.html import body, head, html, link, meta, script
 from koyoapp.meta import metadata_tags
@@ -454,6 +469,25 @@ Prerenders every static route into .koyo/build/site as plain HTML files
 file host. Dynamic routes are skipped with a printed notice, they must be
 served by the running Koyo server. Compiling Tailwind here runs in
 production mode, minified, with no watch.
+
+## Deploying
+
+The scaffold ships deploy-ready files for platforms that run the app as a
+live server (Railway, Render, Fly.io, any VPS):
+
+- Procfile starts the production server:
+  python -m uvicorn koyoapp.serve:app --host 0.0.0.0 --port $PORT
+- requirements.txt pins koyoapp to the version the scaffold ran.
+- .railwayignore keeps the local .venv and build output out of the upload,
+  so the container builds its own Linux environment.
+
+For Railway: run "railway init", then "railway up", then "railway domain"
+to get a public URL. For Render: create a Web Service pointing at the repo
+root with build command "pip install -r requirements.txt" and start
+command "python -m uvicorn koyoapp.serve:app --host 0.0.0.0 --port $PORT".
+
+Sessions are in-memory only. They reset on restart and do not share across
+processes, so run a single replica unless you move state elsewhere.
 
 ## Styles
 
