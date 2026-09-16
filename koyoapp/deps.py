@@ -319,8 +319,10 @@ def upgrade(
 ) -> str:
     """Upgrade koyoapp in the project venv.
 
-    Pass a *version* string like ``"0.2.1"`` to pin an exact release,
-    or ``None`` for the latest. Returns the installed version string.
+    Pass a *version* string like ``"0.3.0"`` to pin an exact release,
+    or ``None`` for the latest. After a successful install the koyoapp
+    entry in pyproject.toml is pinned to the installed version. Returns
+    the installed version string.
     """
     project_dir = ensure_project_dir(project_dir)
     requirement = f"koyoapp=={version}" if version else "koyoapp"
@@ -332,4 +334,14 @@ def upgrade(
     if result.returncode != 0:
         raise DepsError("pip upgrade failed, check pip output above for details")
     installed = installed_version(project_dir, "koyoapp")
-    return installed or "unknown"
+    if not installed:
+        raise DepsError("koyoapp upgraded but its version could not be read from the venv")
+
+    path = project_dir / "pyproject.toml"
+    document = read_toml(path)
+    array = _find_array(document, dev=False)
+    if array is not None:
+        _upsert(array, f"koyoapp=={installed}")
+        write_toml(path, document)
+        koyo_log.info(f"Pinned koyoapp=={installed} in pyproject.toml")
+    return installed

@@ -40,6 +40,8 @@ def test_upgrade_latest_passes_correct_args(tmp_path, monkeypatch):
 
     assert calls == [["install", "--disable-pip-version-check", "--upgrade", "koyoapp"]]
     assert installed == "0.3.0"
+    text = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"koyoapp==0.3.0"' in text
 
 
 def test_upgrade_pinned_version_passes_correct_args(tmp_path, monkeypatch):
@@ -54,15 +56,20 @@ def test_upgrade_pinned_version_passes_correct_args(tmp_path, monkeypatch):
 
     assert calls == [["install", "--disable-pip-version-check", "--upgrade", "koyoapp==0.2.1"]]
     assert installed == "0.2.1"
+    text = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"koyoapp==0.2.1"' in text
 
 
-def test_upgrade_pip_failure_raises(tmp_path, monkeypatch):
+def test_upgrade_pip_failure_raises_and_keeps_toml(tmp_path, monkeypatch):
     make_project(tmp_path)
     monkeypatch.setattr(deps, "run_pip", lambda project_dir, args, **kw: fail_result(*args))
     monkeypatch.setattr(deps, "installed_version", lambda _project, _pkg: "0.1.0")
 
     with pytest.raises(deps.DepsError, match="pip upgrade failed"):
         deps.upgrade(tmp_path)
+
+    text = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"koyoapp>=0.1.0"' in text
 
 
 def test_upgrade_requires_project_dir(tmp_path):
@@ -71,11 +78,30 @@ def test_upgrade_requires_project_dir(tmp_path):
         deps.upgrade(tmp_path)
 
 
-def test_upgrade_installed_version_returns_unknown(tmp_path, monkeypatch):
+def test_upgrade_unknown_version_raises(tmp_path, monkeypatch):
     make_project(tmp_path)
     monkeypatch.setattr(deps, "run_pip", lambda project_dir, args, **kw: ok_result(*args))
     monkeypatch.setattr(deps, "installed_version", lambda _project, _pkg: None)
 
-    installed = deps.upgrade(tmp_path)
+    with pytest.raises(deps.DepsError, match="version could not be read"):
+        deps.upgrade(tmp_path)
 
-    assert installed == "unknown"
+
+def test_upgrade_writes_toml_even_when_koyoapp_missing(tmp_path, monkeypatch):
+    text = '''\
+[project]
+name = "demo"
+version = "0.1.0"
+dependencies = [
+    "requests==2.31.0",
+]
+'''
+    make_project(tmp_path, text)
+    monkeypatch.setattr(deps, "run_pip", lambda project_dir, args, **kw: ok_result(*args))
+    monkeypatch.setattr(deps, "installed_version", lambda _project, _pkg: "0.2.1")
+
+    deps.upgrade(tmp_path)
+
+    toml = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"koyoapp==0.2.1"' in toml
+    assert '"requests==2.31.0"' in toml
