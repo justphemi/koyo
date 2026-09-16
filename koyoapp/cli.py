@@ -6,17 +6,39 @@ from pathlib import Path
 
 import typer
 
+from . import __version__ as _version
 from . import deps as koyo_deps
 from . import log as koyo_log
 from .build import run_build
 from .dev import DEFAULT_HOST, run_dev
 from .scaffold import ScaffoldError, scaffold
 
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"koyoapp {_version}")
+        raise typer.Exit()
+
+
 app = typer.Typer(
     add_completion=False,
-    no_args_is_help=True,
+    invoke_without_command=True,
     help="Koyo, a Python web framework with file based routing.",
 )
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        False,
+        "-v",
+        "--version",
+        is_eager=True,
+        callback=_version_callback,
+        help="Show the version and exit.",
+    ),
+) -> None:
+    """Koyo — a Python web framework with file based routing."""
 
 
 @app.command()
@@ -117,6 +139,27 @@ def build() -> None:
     """Prerender static routes to production HTML in .koyo/build."""
     try:
         run_build(Path.cwd())
+    except koyo_deps.DepsError as exc:
+        typer.echo(f"error: {exc}")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def upgrade(
+    version: str = typer.Argument(
+        None,
+        help="Specific koyoapp version, for example 0.3.0. Defaults to the latest release.",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", help="Stream the full pip output instead of a quiet summary."
+    ),
+) -> None:
+    """Upgrade koyoapp to the latest or a specific version."""
+    koyo_log.set_verbose(verbose)
+    try:
+        installed = koyo_deps.upgrade(Path.cwd(), version)
+        target = f"koyoapp=={version}" if version else "koyoapp (latest)"
+        koyo_log.info(f"Upgraded to {target} (installed: {installed})")
     except koyo_deps.DepsError as exc:
         typer.echo(f"error: {exc}")
         raise typer.Exit(code=1)

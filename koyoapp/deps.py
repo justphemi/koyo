@@ -310,3 +310,26 @@ def install(
         f"Installed {len(main_entries) + dev_count} dependencies "
         f"({len(main_entries)} main, {dev_count} dev) into .venv"
     )
+
+
+def upgrade(
+    project_dir: str | Path,
+    version: str | None = None,
+    verbose: bool | None = None,
+) -> str:
+    """Upgrade koyoapp in the project venv.
+
+    Pass a *version* string like ``"0.2.1"`` to pin an exact release,
+    or ``None`` for the latest. Returns the installed version string.
+    """
+    project_dir = ensure_project_dir(project_dir)
+    requirement = f"koyoapp=={version}" if version else "koyoapp"
+    result = run_pip(
+        project_dir,
+        ["install", "--disable-pip-version-check", "--upgrade", requirement],
+        verbose=verbose,
+    )
+    if result.returncode != 0:
+        raise DepsError("pip upgrade failed, check pip output above for details")
+    installed = installed_version(project_dir, "koyoapp")
+    return installed or "unknown"
