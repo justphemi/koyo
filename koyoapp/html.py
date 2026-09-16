@@ -19,7 +19,7 @@ _VOID_ELEMENTS = {
     "input", "link", "meta", "param", "source", "track", "wbr",
 }
 
-_ATTR_ALIASES = {"class_": "class", "for_": "for"}
+_ATTR_ALIASES = {"class_": "class", "for_": "for", "cls": "class"}
 
 
 class Markup:
@@ -57,12 +57,7 @@ class Element:
             self.children.extend(children)
 
     def __getitem__(self, children: Any) -> "Element":
-        if isinstance(children, (str, bytes, Markup, Element)) or children is None:
-            self.children.append(children)
-        elif isinstance(children, Mapping):
-            self.children.append(children)
-        else:
-            self.children.extend(children)
+        _append_children(self, children)
         return self
 
     def render(self) -> str:
@@ -73,6 +68,16 @@ class Element:
 
     def __repr__(self) -> str:
         return f"<Element {self.tag}>"
+
+
+def _append_children(el: Element, children: Any) -> None:
+    """Append one child or an iterable of children onto an element."""
+    if isinstance(children, (str, bytes, Markup, Element)) or children is None:
+        el.children.append(children)
+    elif isinstance(children, Mapping):
+        el.children.append(children)
+    else:
+        el.children.extend(children)
 
 
 def _attr_name(name: str) -> str:
@@ -149,8 +154,11 @@ _TAGS = [
 
 
 def _make_tag_factory(tag: str) -> Callable[..., Element]:
-    def factory(**attrs: Any) -> Element:
-        return Element(tag, attrs)
+    def factory(*children: Any, **attrs: Any) -> Element:
+        el = Element(tag, attrs)
+        for child in children:
+            _append_children(el, child)
+        return el
 
     factory.__name__ = tag
     factory.__qualname__ = tag

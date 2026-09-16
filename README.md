@@ -66,15 +66,22 @@ a function named `page`, and a layout file must export a function named
 
 `koyoapp.html` exposes function based HTML elements. Text content is HTML
 escaped by default; use `Markup` (or `raw()`) for raw unescaped output.
+Children can be passed positionally as arguments or appended with square
+brackets; both styles can be mixed, and a list (or any iterable) passed as
+a single child is flattened in place. Attributes map underscores to
+hyphens (`hx_`, `data_`, `aria_`), and `class_` / `cls` both mean `class`.
 
 ```python
-from koyoapp.html import div, h1, p
+from koyoapp.html import div, h1, p, span
 
 def Card(title: str, body: str):
     return div(class_="p-4 rounded-lg shadow bg-white")[
         h1(class_="text-xl font-bold")[title],
         p(class_="text-gray-600")[body],
     ]
+
+def Row(label: str, value: str):
+    return div(span(label, cls="font-medium"), span(value), class_="flex gap-2")
 ```
 
 ## Styles

@@ -372,6 +372,13 @@ export plain functions that return HTML:
     def badge(label):
         return p(class_="text-sm text-slate-600")[label]
 
+Children can be passed positionally or appended with square brackets; the
+two styles mix freely, and attributes use class_ (or cls) as a shorthand
+for the class keyword:
+
+    def badge(label):
+        return p("Hello ", label, class_="text-sm text-slate-600")
+
 Because the project root is on the Python path in the dev server, any page
 or layout can import them with an absolute import:
 
