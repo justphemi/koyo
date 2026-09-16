@@ -18,7 +18,7 @@ from .reload import apply_pycache_prefix, bump_token, with_pycache_env
 from .tailwind import OUTPUT_CSS, compile_tailwind, ensure_tailwind_present, start_tailwind_watch
 
 DEFAULT_PORT = 2309
-DEFAULT_HOST = "::"
+DEFAULT_HOST = "0.0.0.0"
 SERVER_LOG = "dev-server.log"
 _WATCH_STEP = 150
 

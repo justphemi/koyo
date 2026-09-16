@@ -10,7 +10,7 @@ from . import __version__ as _version
 from . import deps as koyo_deps
 from . import log as koyo_log
 from .build import run_build
-from .dev import DEFAULT_HOST, run_dev
+from .dev import run_dev
 from .scaffold import ScaffoldError, scaffold
 
 
@@ -63,7 +63,7 @@ def dev(
     host: str = typer.Option(
         None,
         "--host",
-        help=f"Address to bind. Defaults to all interfaces via {DEFAULT_HOST}, reachable from other devices on the LAN.",
+        help="Address to bind. Defaults to all IPv4 interfaces, reachable from other devices on the LAN.",
     ),
     verbose: bool = typer.Option(
         False, "--verbose", help="Stream raw subprocess output from uvicorn, npm, and Tailwind."

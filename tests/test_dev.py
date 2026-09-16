@@ -9,6 +9,10 @@ from koyoapp.router import clear_module_cache
 from test_router import make_project
 
 
+def test_default_host_is_ipv4_all_interfaces():
+    assert dev_module.DEFAULT_HOST == "0.0.0.0"
+
+
 class _FakeProc:
     def poll(self):
         return None
