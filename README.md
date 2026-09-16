@@ -29,8 +29,7 @@ koyoapp dev
 Open http://127.0.0.1:2309. The home page renders out of the box with an
 animated hero, a call to action linking to the Koyo documentation, and a
 live session counter driven by htmx. Edit any file under `app/`, `public/`,
-or `styles/` and the dev server restarts and the browser reloads
-automatically.
+or `styles/` and the page updates in place without a full reload.
 
 ## CLI
 

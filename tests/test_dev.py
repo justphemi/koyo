@@ -13,6 +13,64 @@ def test_default_host_is_ipv4_all_interfaces():
     assert dev_module.DEFAULT_HOST == "0.0.0.0"
 
 
+def test_live_reload_js_bundles_morphdom_and_poll_logic():
+    from koyoapp.reload import live_reload_js
+
+    js = live_reload_js()
+    assert "morphdom" in js
+    assert "__koyo-reload" in js
+    assert "location.reload" not in js
+
+
+def test_inject_dev_reload_references_live_script(tmp_path, monkeypatch):
+    from koyoapp.reload import LIVE_RELOAD_URL, inject_dev_reload
+
+    monkeypatch.setenv("KOYO_DEV", "1")
+    out = inject_dev_reload("<html><body><h1>Hi</h1></body></html>")
+    assert LIVE_RELOAD_URL in out
+    assert out.index(LIVE_RELOAD_URL) < out.index("</body>")
+
+    monkeypatch.delenv("KOYO_DEV", raising=False)
+    out = inject_dev_reload("<html><body><h1>Hi</h1></body></html>")
+    assert LIVE_RELOAD_URL not in out
+
+
+def test_live_reload_route_serves_js_in_dev_only(tmp_path, monkeypatch):
+    from koyoapp.reload import LIVE_RELOAD_URL
+    from koyoapp.router import clear_module_cache
+
+    make_project(tmp_path)
+    clear_module_cache()
+    monkeypatch.setenv("KOYO_DEV", "1")
+    app = build_app(tmp_path)
+    with TestClient(app) as client:
+        response = client.get(LIVE_RELOAD_URL)
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("application/javascript")
+        assert "morphdom" in response.text
+    clear_module_cache()
+    monkeypatch.delenv("KOYO_DEV", raising=False)
+    app = build_app(tmp_path)
+    with TestClient(app) as client:
+        assert client.get(LIVE_RELOAD_URL).status_code == 404
+    clear_module_cache()
+
+
+def test_dev_mode_injects_live_reload_script_into_pages(tmp_path, monkeypatch):
+    from koyoapp.reload import LIVE_RELOAD_URL
+    from koyoapp.router import clear_module_cache
+
+    make_project(tmp_path)
+    clear_module_cache()
+    monkeypatch.setenv("KOYO_DEV", "1")
+    app = build_app(tmp_path)
+    with TestClient(app) as client:
+        response = client.get("/")
+        assert response.status_code == 200
+        assert f'src="{LIVE_RELOAD_URL}"' in response.text
+    clear_module_cache()
+
+
 class _FakeProc:
     def poll(self):
         return None

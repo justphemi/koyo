@@ -12,7 +12,14 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from .html import Markup, a, body, div, h1, head, html, meta, p, pre, style, title
-from .reload import current_token, dev_mode, inject_dev_reload
+from .reload import (
+    LIVE_RELOAD_URL,
+    RELOAD_URL,
+    current_token,
+    dev_mode,
+    inject_dev_reload,
+    live_reload_js,
+)
 from .router import (
     RouteEntry,
     RouteError,
@@ -180,6 +187,14 @@ async def _reload_probe(request) -> Response:
     return Response(token, status_code=200, headers=headers)
 
 
+async def _live_reload_script(request) -> Response:
+    return Response(
+        live_reload_js(),
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 def build_app(project_dir: str | Path) -> Starlette:
     project_dir = Path(project_dir).resolve()
     root = str(project_dir)
@@ -204,7 +219,8 @@ def build_app(project_dir: str | Path) -> Starlette:
         )
     ]
     if dev_mode():
-        routes.append(Route("/__koyo-reload", _reload_probe))
+        routes.append(Route(RELOAD_URL, _reload_probe))
+        routes.append(Route(LIVE_RELOAD_URL, _live_reload_script))
     for entry in entries:
         routes.append(
             Route(

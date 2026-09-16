@@ -363,7 +363,8 @@ footer from components/site.py, which links back to the documentation.
 ## Components
 
 The components/ folder is created by default and is watched by the dev
-server, so a save in there also reloads the page. Files in components/
+server, so a save in there updates the page in place without a full reload.
+Files in components/
 export plain functions that return HTML:
 
     # components/site.py

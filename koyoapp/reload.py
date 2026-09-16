@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import sys
 import time
@@ -10,7 +11,20 @@ from pathlib import Path
 TOKEN_DIR = ".koyo"
 TOKEN_FILE = "reload-token"
 RELOAD_URL = "/__koyo-reload"
+LIVE_RELOAD_URL = "/__koyo-live-reload.js"
 PYCACHE_SUBDIR = "pycache"
+
+_VENDOR_DIR = Path(__file__).resolve().parent / "vendor"
+
+
+def _read_vendor(name: str) -> str:
+    return (_VENDOR_DIR / name).read_text(encoding="utf-8")
+
+
+@functools.lru_cache(maxsize=1)
+def live_reload_js() -> str:
+    """The concatenated client script: morphdom + the live reload poll and morph."""
+    return _read_vendor("morphdom.min.js") + "\n" + _read_vendor("koyo-live-reload.js")
 
 
 def pycache_dir(project_dir: str | Path) -> Path:
@@ -57,27 +71,12 @@ def bump_token(project_dir: str | Path) -> None:
 
 
 _RELOAD_SCRIPT = (
-    '<script id="koyo-reload-script">'
-    '(function(){'
-    'var key="koyo-reload-token";'
-    'var last=sessionStorage.getItem(key)||"";'
-    'function poll(){'
-    'fetch("__KOYO_RELOAD_URL__?since="+encodeURIComponent(last),{cache:"no-store"})'
-    ".then(function(r){"
-    'last=r.headers.get("X-Koyo-Token")||last;'
-    "sessionStorage.setItem(key,last);"
-    "if(r.status===200){location.reload();}else{setTimeout(poll,700);}"
-    "})"
-    ".catch(function(){setTimeout(poll,600);});"
-    "}"
-    "poll();"
-    "})();"
-    "</script>"
+    f'<script id="koyo-reload-script" src="{LIVE_RELOAD_URL}"></script>'
 )
 
 
 def _reload_script() -> str:
-    return _RELOAD_SCRIPT.replace("__KOYO_RELOAD_URL__", RELOAD_URL)
+    return _RELOAD_SCRIPT
 
 
 def inject_dev_reload(content: str) -> str:
