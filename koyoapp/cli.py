@@ -10,6 +10,7 @@ from . import __version__ as _version
 from . import deps as koyo_deps
 from . import log as koyo_log
 from .build import run_build
+from .config import ProjectError
 from .dev import run_dev
 from .scaffold import ScaffoldError, scaffold
 
@@ -71,7 +72,11 @@ def dev(
 ) -> None:
     """Run the Koyo dev server with hot reload."""
     koyo_log.set_verbose(verbose)
-    run_dev(Path.cwd(), port, host=host, verbose=verbose)
+    try:
+        run_dev(Path.cwd(), port, host=host, verbose=verbose)
+    except ProjectError as exc:
+        typer.echo(f"error: {exc}")
+        raise typer.Exit(code=1)
 
 
 @app.command()
