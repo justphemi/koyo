@@ -14,6 +14,7 @@ import watchfiles
 from . import config as koyo_config
 from . import log as koyo_log
 from . import net as koyo_net
+from .config import ProjectError, require_project_root
 from .reload import apply_pycache_prefix, bump_token, with_pycache_env
 from .tailwind import OUTPUT_CSS, compile_tailwind, ensure_tailwind_present, start_tailwind_watch
 
@@ -42,7 +43,10 @@ def run_dev(
     if verbose:
         koyo_log.set_verbose(True)
     started = time.monotonic()
-    project_dir = Path(project_dir).resolve()
+    # Fail fast before creating directories, running npm, or spawning servers:
+    # running koyoapp dev outside a project used to scaffold empty app/, public/
+    # and styles/ folders into the current directory and then crash.
+    project_dir = require_project_root(project_dir)
     apply_pycache_prefix(project_dir)
     explicit_port = port is not None
     bind_host = host or DEFAULT_HOST
@@ -81,6 +85,7 @@ def run_dev(
         project_dir / "koyo.config.py",
         project_dir / "tailwind.config.js",
     ]
+    watch_paths = _existing_watch_paths(watch_paths)
     components_dir = project_dir / "components"
     if components_dir.is_dir():
         watch_paths.append(components_dir)
@@ -108,6 +113,17 @@ def run_dev(
         _stop(server_proc)
         if tailwind_proc is not None:
             _stop(tailwind_proc)
+
+
+def _existing_watch_paths(paths: list) -> list:
+    """Drop watched paths that do not exist yet.
+
+    watchfiles' RustNotify raises FileNotFoundError("No path was found.")
+    when any watched path is missing, which crashed the dev server for
+    projects without a koyo.config.py or tailwind.config.js. Those files are
+    optional, so watching a subset is the correct behavior.
+    """
+    return [path for path in paths if path.exists()]
 
 
 def _print_startup(port: int, elapsed_ms: int) -> None:

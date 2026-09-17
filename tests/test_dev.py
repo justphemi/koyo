@@ -2,14 +2,17 @@ import os
 import socket
 
 import pytest
-
 from starlette.testclient import TestClient
+from typer.testing import CliRunner
 
 from koyoapp import dev as dev_module
 from koyoapp.app import build_app
+from koyoapp.cli import app as cli_app
 from koyoapp.router import clear_module_cache
 
 from test_router import make_project
+
+runner = CliRunner()
 
 
 def test_default_host_is_ipv4_all_interfaces():
@@ -171,3 +174,101 @@ def test_print_startup_without_lan_shows_local_only(tmp_path, monkeypatch, capsy
     out = capsys.readouterr().out
     assert "Local    http://localhost:2309" in out
     assert "Network" not in out
+
+
+def test_is_project_root_detects_koyo_projects(tmp_path):
+    from koyoapp.config import is_project_root
+
+    assert not is_project_root(tmp_path)
+    (tmp_path / "koyo.config.py").write_text("PORT = 2309\n", encoding="utf-8")
+    assert is_project_root(tmp_path)
+
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "app").mkdir()
+    assert is_project_root(other)
+
+
+def test_require_project_root_resolves_valid_directory(tmp_path):
+    from koyoapp.config import require_project_root
+
+    make_project(tmp_path)
+    assert require_project_root(tmp_path) == tmp_path.resolve()
+
+
+def test_require_project_root_raises_outside_project(tmp_path):
+    from koyoapp.config import ProjectError, require_project_root
+
+    with pytest.raises(ProjectError) as excinfo:
+        require_project_root(tmp_path)
+    message = str(excinfo.value)
+    assert "not a Koyo project" in message
+    assert "koyo.config.py" in message
+    assert str(tmp_path.resolve()) in message
+
+
+def test_run_dev_rejects_non_project_directory_without_side_effects(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        dev_module,
+        "ensure_tailwind_present",
+        lambda *args, **kwargs: calls.append("tailwind") or None,
+    )
+    monkeypatch.setattr(dev_module, "bump_token", lambda *args, **kwargs: calls.append("token"))
+
+    with pytest.raises(dev_module.ProjectError):
+        dev_module.run_dev(tmp_path)
+
+    assert calls == []
+    assert not (tmp_path / "app").exists()
+    assert not (tmp_path / "public").exists()
+    assert not (tmp_path / "styles").exists()
+    assert not (tmp_path / ".koyo").exists()
+
+
+def test_cli_dev_reports_error_outside_project(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    result = runner.invoke(cli_app, ["dev"])
+
+    assert result.exit_code == 1
+    assert "error:" in result.output
+    assert "not a Koyo project" in result.output
+    assert "koyoapp create" in result.output
+
+
+def test_existing_watch_paths_drops_missing_entries(tmp_path):
+    keep_dir = tmp_path / "app"
+    keep_dir.mkdir()
+    keep_file = tmp_path / "koyo.config.py"
+    keep_file.write_text("PORT = 2309\n", encoding="utf-8")
+    watched = [
+        keep_dir,
+        tmp_path / "public",
+        keep_file,
+        tmp_path / "tailwind.config.js",
+    ]
+
+    assert dev_module._existing_watch_paths(watched) == [keep_dir, keep_file]
+
+
+def test_run_dev_only_watches_paths_that_exist(tmp_path, monkeypatch):
+    make_project(tmp_path)  # has no tailwind.config.js on purpose
+    watched = {}
+    monkeypatch.setattr(dev_module, "ensure_tailwind_present", lambda *args, **kwargs: None)
+    monkeypatch.setattr(dev_module, "_spawn_server", lambda *args, **kwargs: None)
+    monkeypatch.setattr(dev_module, "_wait_until_ready", lambda *args, **kwargs: 0.0)
+    monkeypatch.setattr(dev_module.koyo_net, "detect_lan_ip", lambda: None)
+
+    def fake_watch(*paths, **kwargs):
+        watched["paths"] = paths
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(dev_module.watchfiles, "watch", fake_watch)
+
+    dev_module.run_dev(tmp_path)
+
+    assert watched["paths"]
+    for path in watched["paths"]:
+        assert path.exists()
+    assert (tmp_path / "tailwind.config.js") not in watched["paths"]

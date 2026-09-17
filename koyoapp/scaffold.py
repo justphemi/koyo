@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import templates
+from .config import PROJECT_ROOT_MARKERS
 from ._placeholders import ICON_RGB, LOGO_RGB, make_favicon_ico, make_png
 from .venv import create_venv
 
@@ -15,9 +16,6 @@ _ASSET_DIR = Path(__file__).resolve().parent / "assets"
 
 class ScaffoldError(Exception):
     """Raised when a project cannot be scaffolded."""
-
-
-_ROOT_MARKERS = ("app", "koyo.config.py")
 
 
 def _koyo_version() -> str:
@@ -37,7 +35,7 @@ def scaffold(target: str) -> Path:
         root = (Path.cwd() / target).resolve()
         project_name = target.replace("/", "-")
 
-    if any((root / marker).exists() for marker in _ROOT_MARKERS):
+    if any((root / marker).exists() for marker in PROJECT_ROOT_MARKERS):
         raise ScaffoldError(
             f"refusing to scaffold into {root}, a Koyo project already exists there"
         )
